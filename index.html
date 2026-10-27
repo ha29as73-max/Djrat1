@@ -1,0 +1,1559 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>دجرات - تجربة التسجيل والمحادثات المتكاملة</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              DEFAULT: '#088395',
+              dark: '#0a6371',
+              light: '#0eb2cb',
+              container: '#e0f4f7'
+            },
+            sand: {
+              50: '#fdfbf7',
+              100: '#f7f2ea',
+              200: '#efe5d4',
+              300: '#dfceb3',
+              400: '#caaE8d',
+              500: '#b8946e',
+            },
+            surface: {
+              light: '#fffaf6',
+              card: '#ffffff',
+              dark: '#111822',
+              cardDark: '#1a2332'
+            }
+          },
+          fontFamily: {
+            sans: ['Alexandria', 'Plus Jakarta Sans', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Alexandria', 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      vertical-align: middle;
+    }
+    .material-symbols-outlined.fill {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    ::-webkit-scrollbar {
+      width: 4px;
+      height: 4px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(8, 131, 149, 0.25);
+      border-radius: 4px;
+    }
+    .fade-in {
+      animation: fadeIn 0.25s ease-out forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+
+  <!-- Firebase & WebRTC STUN Configuration -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // Your Firebase Project Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBvfitATHAWVu1b1Ys_FPt-YBMat577bTE",
+      authDomain: "djrat-5c4f9.firebaseapp.com",
+      projectId: "djrat-5c4f9",
+      storageBucket: "djrat-5c4f9.firebasestorage.app",
+      messagingSenderId: "807252527574",
+      appId: "1:807252527574:web:9c0dfe2331454bddf6fc77",
+      measurementId: "G-YPS2QD8DCF"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    window.db = getFirestore(app);
+    window.auth = getAuth(app);
+
+    // WebRTC Configuration using Google STUN Servers for Calls
+    window.webrtcConfig = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]
+    };
+
+    console.log("Firebase & Google STUN Call Servers Connected Successfully!");
+  </script>
+<style>
+    /* ===== إضافات دجرات (مراسلة، مكالمات، جهات اتصال) ===== */
+    .dj-wall { position: fixed; top: 0; bottom: 0; left: 0; right: 0; margin: 0 auto; width: 100%; max-width: 28rem; }
+    .dj-msgs { background-color: #f3ede3; background-image: radial-gradient(rgba(8,131,149,.07) 1px, transparent 1px); background-size: 18px 18px; -webkit-touch-callout: none; }
+    html.dark .dj-msgs { background-color: #0e1620; background-image: radial-gradient(rgba(14,178,203,.07) 1px, transparent 1px); }
+    .dj-bub, .chat-item, .dj-row { -webkit-touch-callout: none; }
+    .dj-sel { outline: 2px solid #088395; outline-offset: 2px; }
+    .dj-flash > .dj-bub { animation: djFlash 1.4s ease-out; }
+    @keyframes djFlash { 0%, 60% { box-shadow: 0 0 0 4px rgba(8,131,149,.55); } 100% { box-shadow: 0 0 0 0 rgba(8,131,149,0); } }
+    .dj-sheet-panel { animation: djUp .22s ease-out; }
+    @keyframes djUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    .dj-pulse { animation: djPulse 1.6s ease-in-out infinite; }
+    @keyframes djPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,.35); } 50% { box-shadow: 0 0 0 18px rgba(255,255,255,0); } }
+    .dj-off { background: #fff !important; color: #111 !important; }
+    #toast { z-index: 90; }
+    #dj-input { max-height: 120px; }
+
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#088395">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>html.dj-host #dj-chat{bottom:64px!important}html.dj-host #dj-call{bottom:64px!important}</style>
+<script>if(/netlify\.app$/.test(location.hostname))document.documentElement.classList.add('dj-host');</script>
+</head>
+<body class="bg-[#f6f2ec] dark:bg-[#0c1219] text-[#2b2520] dark:text-[#e4e9f0] min-h-screen flex justify-center items-start transition-colors duration-300">
+
+  <!-- Mobile Shell Container -->
+  <div class="w-full max-w-md min-h-screen relative flex flex-col shadow-2xl bg-surface-light dark:bg-surface-dark overflow-hidden border-x border-[#eadfd4] dark:border-[#1e293b]">
+
+    <!-- ==============================================
+         VIEW 1: AUTH / LOGIN SCREEN
+    ============================================== -->
+    <div id="view-auth" class="flex-1 flex flex-col justify-between p-6 fade-in">
+      <!-- Top header bar -->
+      <div class="flex items-center justify-between">
+        <button onclick="toggleDarkMode()" class="p-2.5 rounded-full bg-sand-100 dark:bg-surface-cardDark text-gray-700 dark:text-gray-200 shadow-sm border border-sand-200 dark:border-gray-700 hover:scale-105 active:scale-95 transition">
+          <span id="theme-icon" class="material-symbols-outlined text-xl">dark_mode</span>
+        </button>
+        <div class="flex items-center gap-1.5 px-3 py-1 bg-primary/10 dark:bg-primary/20 rounded-full border border-primary/20 text-xs font-semibold text-primary dark:text-primary-light">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>شبكة دجلة الآمنة</span>
+        </div>
+      </div>
+
+      <!-- Brand Logo & Slogan -->
+      <div class="text-center my-6">
+        <div class="relative inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-tr from-primary-dark via-primary to-teal-500 text-white shadow-xl shadow-primary/25 mb-3">
+          <span class="material-symbols-outlined text-4xl">water</span>
+          <div class="absolute -bottom-1 -right-1 bg-amber-500 text-white rounded-full p-1 shadow-md flex items-center justify-center">
+            <span class="material-symbols-outlined text-sm font-bold">lock</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-center gap-2 mb-1">
+          <span class="text-xs uppercase tracking-widest font-extrabold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">DJRAT</span>
+          <h1 class="text-3xl font-extrabold text-primary dark:text-primary-light">دجـرات</h1>
+        </div>
+        <p class="text-xs text-gray-600 dark:text-gray-400 font-medium">تواصل سريع ومشفّر بلا تعقيدات وبدون الحاجة إلى بطاقة SIM</p>
+      </div>
+
+      <!-- Auth Form Card -->
+      <div class="bg-white dark:bg-surface-cardDark rounded-3xl p-5 shadow-lg border border-sand-200/80 dark:border-gray-800 space-y-4">
+        <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-xl">verified_user</span>
+            <span class="text-sm font-bold">الدخول المباشر بالبريد</span>
+          </div>
+          <span class="text-[11px] px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-bold">الخطوة 1 من 2</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-gray-700 dark:text-gray-300">البريد الإلكتروني للتحقق</label>
+          <div class="relative">
+            <span class="material-symbols-outlined absolute right-3 top-3 text-gray-400 text-lg">mail</span>
+            <input id="auth-email-input" type="email" value="user@djrat.iq" dir="ltr" class="w-full pl-24 pr-10 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-sand-50 dark:bg-[#121924] focus:outline-none focus:border-primary text-left">
+            <button type="button" class="absolute left-2 top-2 px-2.5 py-1 text-xs rounded-lg bg-sand-200 dark:bg-gray-800 text-gray-700 dark:text-gray-200 font-medium hover:bg-sand-300 flex items-center gap-1">
+              <span class="material-symbols-outlined text-xs">send</span> إرسال
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between text-xs mb-1.5">
+            <span class="font-semibold text-gray-700 dark:text-gray-300">رمز التحقق الرقمي (OTP)</span>
+            <span class="text-amber-600 font-mono text-[11px] font-bold">⏱ 01:57</span>
+          </div>
+          <div class="grid grid-cols-6 gap-2" dir="ltr">
+            <input maxlength="1" value="7" class="otp-box w-full aspect-square text-center font-bold text-lg rounded-xl border border-gray-200 dark:border-gray-700 bg-sand-50 dark:bg-[#121924] text-primary focus:border-primary focus:outline-none">
+            <input maxlength="1" value="2" class="otp-box w-full aspect-square text-center font-bold text-lg rounded-xl border border-gray-200 dark:border-gray-700 bg-sand-50 dark:bg-[#121924] text-primary focus:border-primary focus:outline-none">
+            <input maxlength="1" value="9" class="otp-box w-full aspect-square text-center font-bold text-lg rounded-xl border border-gray-200 dark:border-gray-700 bg-sand-50 dark:bg-[#121924] text-primary focus:border-primary focus:outline-none">
+            <input maxlength="1" value="4" class="otp-box w-full aspect-square text-center font-bold text-lg rounded-xl border border-gray-200 dark:border-gray-700 bg-sand-50 dark:bg-[#121924] text-primary focus:border-primary focus:outline-none">
+            <input maxlength="1" value="8" class="otp-box w-full aspect-square text-center font-bold text-lg rounded-xl border border-gray-200 dark:border-gray-700 bg-sand-50 dark:bg-[#121924] text-primary focus:border-primary focus:outline-none">
+            <input maxlength="1" value="3" class="otp-box w-full aspect-square text-center font-bold text-lg rounded-xl border border-gray-200 dark:border-gray-700 bg-sand-50 dark:bg-[#121924] text-primary focus:border-primary focus:outline-none">
+          </div>
+          <div class="flex justify-between items-center text-[11px] text-gray-500 mt-2">
+            <span>لم يصلك الرمز؟</span>
+            <button type="button" class="text-primary font-bold hover:underline flex items-center gap-0.5">
+              <span class="material-symbols-outlined text-xs">refresh</span> إعادة الإرسال
+            </button>
+          </div>
+        </div>
+
+        <button onclick="goToProfileSetup()" class="w-full py-3 rounded-2xl bg-primary hover:bg-primary-dark active:scale-[0.98] transition-all text-white font-bold flex items-center justify-center gap-2 shadow-md shadow-primary/30">
+          <span>تأكيد والدخول لملء الملف الشخصي</span>
+          <span class="material-symbols-outlined text-lg">arrow_back</span>
+        </button>
+
+        <div class="relative flex py-1 items-center">
+          <div class="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+          <span class="flex-shrink mx-2 text-[10px] text-gray-400 font-semibold uppercase">أو اختبر فوراً</span>
+          <div class="flex-grow border-t border-gray-200 dark:border-gray-700"></div>
+        </div>
+
+        <button onclick="goToProfileSetup()" class="w-full py-2.5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 font-bold text-xs flex items-center justify-center gap-2 hover:bg-amber-100 transition">
+          <span class="material-symbols-outlined text-base">bolt</span>
+          <span>تشغيل الوضع التجريبي السريع (Demo Mode)</span>
+        </button>
+
+        <div class="flex items-center justify-center gap-1.5 text-[11px] text-gray-500 pt-1">
+          <span class="material-symbols-outlined text-sm text-emerald-600">verified</span>
+          <span>تشفير كامل للبيانات طرف-إلى-طرف (End-to-End)</span>
+        </div>
+      </div>
+
+      <!-- Footer Rights -->
+      <div class="text-center pt-4 text-xs font-semibold text-gray-500 dark:text-gray-400">
+        جميع الحقوق محفوظة © ألباب العقول
+      </div>
+    </div>
+
+    <!-- ==============================================
+         VIEW 2: PROFILE SETUP (Mandatory Name, Username, Bio, Photo)
+    ============================================== -->
+    <div id="view-profile-setup" class="hidden flex-1 flex-col justify-between p-6 fade-in">
+      <!-- Header -->
+      <div class="flex items-center justify-between border-b border-sand-200 dark:border-gray-800 pb-4">
+        <button onclick="goToAuth()" class="p-2 rounded-xl bg-sand-100 dark:bg-surface-cardDark text-gray-700 dark:text-gray-300">
+          <span class="material-symbols-outlined text-lg">arrow_forward</span>
+        </button>
+        <div class="text-center">
+          <h2 class="text-base font-bold text-primary dark:text-primary-light">إكمال الملف الشخصي</h2>
+          <span class="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">مطلوب للدخول إلى المحادثات</span>
+        </div>
+        <button onclick="toggleDarkMode()" class="p-2 rounded-xl bg-sand-100 dark:bg-surface-cardDark text-gray-700 dark:text-gray-300">
+          <span class="material-symbols-outlined text-lg">dark_mode</span>
+        </button>
+      </div>
+
+      <!-- Form Content -->
+      <div class="my-auto space-y-4 py-4">
+        <!-- Avatar Uploader -->
+        <div class="text-center">
+          <div class="relative inline-block">
+            <div id="avatar-preview-container" class="w-24 h-24 rounded-full border-4 border-primary p-0.5 shadow-xl mx-auto overflow-hidden bg-sand-100 dark:bg-gray-800 flex items-center justify-center">
+              <span id="avatar-initial-display" class="text-3xl font-bold text-primary">ع</span>
+            </div>
+            <label for="avatar-input" class="absolute bottom-0 left-0 bg-primary hover:bg-primary-dark text-white p-2 rounded-full shadow-lg cursor-pointer border-2 border-white dark:border-surface-cardDark active:scale-95 transition">
+              <span class="material-symbols-outlined text-base">photo_camera</span>
+            </label>
+            <input id="avatar-input" type="file" accept="image/*" class="hidden" onchange="previewAvatar(event)">
+          </div>
+          <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-2 font-medium">الصورة الشخصية (اضغط لاختيار لون/رمز البروفايل)</p>
+          
+          <!-- Avatar Icon presets -->
+          <div class="flex justify-center gap-2 mt-2">
+            <button type="button" onclick="selectThemeAvatar('#088395', 'person')" class="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center shadow hover:scale-110 transition">
+              <span class="material-symbols-outlined text-sm">person</span>
+            </button>
+            <button type="button" onclick="selectThemeAvatar('#b8946e', 'face')" class="w-8 h-8 rounded-full bg-amber-700 text-white flex items-center justify-center shadow hover:scale-110 transition">
+              <span class="material-symbols-outlined text-sm">face</span>
+            </button>
+            <button type="button" onclick="selectThemeAvatar('#3b82f6', 'psychology')" class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center shadow hover:scale-110 transition">
+              <span class="material-symbols-outlined text-sm">psychology</span>
+            </button>
+            <button type="button" onclick="selectThemeAvatar('#10b981', 'eco')" class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow hover:scale-110 transition">
+              <span class="material-symbols-outlined text-sm">eco</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Name Input (Mandatory) -->
+        <div class="bg-white dark:bg-surface-cardDark p-4 rounded-2xl border border-sand-200 dark:border-gray-800 shadow-sm space-y-3">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs font-bold flex items-center gap-1 text-gray-700 dark:text-gray-300">
+                <span class="material-symbols-outlined text-sm text-primary">badge</span>
+                <span>الاسم الكامل</span>
+                <span class="text-red-500 font-bold">*إجباري</span>
+              </label>
+              <span id="name-error" class="text-[10px] text-red-500 hidden font-bold">يرجى كتابة الاسم</span>
+            </div>
+            <input id="profile-name-input" type="text" placeholder="مثال: علي حسين علوان" value="علي حسين علوان" oninput="updateInitial()" class="w-full px-3.5 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-sand-50 dark:bg-[#121924] focus:outline-none focus:border-primary">
+          </div>
+
+          <!-- Username Input (Mandatory unique with @) -->
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label class="text-xs font-bold flex items-center gap-1 text-gray-700 dark:text-gray-300">
+                <span class="material-symbols-outlined text-sm text-primary">alternate_email</span>
+                <span>اسم المستخدم (اليوزر)</span>
+                <span class="text-red-500 font-bold">*إجباري</span>
+              </label>
+              <span id="username-error" class="text-[10px] text-red-500 hidden font-bold">اليوزر مطلوب ومتاح</span>
+            </div>
+            <div class="relative" dir="ltr">
+              <span class="absolute left-3 top-2.5 text-primary font-bold text-sm">@</span>
+              <input id="profile-username-input" type="text" placeholder="i_lr8" value="i_lr8" class="w-full pl-8 pr-24 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-sand-50 dark:bg-[#121924] font-mono focus:outline-none focus:border-primary">
+              <span class="absolute right-2 top-2 px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold flex items-center gap-0.5">
+                <span class="material-symbols-outlined text-xs">check_circle</span> متاح
+              </span>
+            </div>
+            <p class="text-[10px] text-gray-500 mt-1">يُستخدم هذا المعرف ليتمكن أصدقاؤك من العثور عليك فوراً.</p>
+          </div>
+
+          <!-- Bio Input -->
+          <div>
+            <label class="text-xs font-bold flex items-center gap-1 text-gray-700 dark:text-gray-300 mb-1">
+              <span class="material-symbols-outlined text-sm text-primary">edit_note</span>
+              <span>الحالة الشخصية (Bio)</span>
+            </label>
+            <textarea id="profile-bio-input" rows="2" placeholder="اكتب نبذة عنك..." class="w-full px-3.5 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-sand-50 dark:bg-[#121924] focus:outline-none focus:border-primary resize-none">ثانويه الباب العقول</textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div>
+        <button onclick="saveProfileAndEnterChats()" class="w-full py-3.5 rounded-2xl bg-primary hover:bg-primary-dark active:scale-[0.98] transition-all text-white font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/30">
+          <span>حفظ والدخول إلى المحادثات</span>
+          <span class="material-symbols-outlined text-lg">chat</span>
+        </button>
+        <p class="text-center text-[11px] text-gray-400 mt-2">يمكنك تعديل هذه البيانات في أي وقت من قسم "حسابي".</p>
+      </div>
+    </div>
+
+    <!-- ==============================================
+         VIEW 3: CHAT LIST (WhatsApp-style + Search, Add Contact, Create Group)
+    ============================================== -->
+    <div id="view-chats" class="hidden flex-1 flex-col fade-in">
+      
+      <!-- Top WhatsApp/Djrat Style Bar -->
+      <div class="bg-white dark:bg-surface-cardDark border-b border-sand-200 dark:border-gray-800 px-4 pt-4 pb-2 sticky top-0 z-20 shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-3">
+            <div class="relative">
+              <div id="nav-user-avatar" class="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-base border-2 border-primary">
+                ع
+              </div>
+              <span class="w-3 h-3 rounded-full bg-emerald-500 absolute bottom-0 right-0 border-2 border-white dark:border-surface-cardDark"></span>
+            </div>
+            <div>
+              <div class="flex items-center gap-1.5">
+                <h1 class="text-lg font-black text-primary dark:text-primary-light">دجـرات</h1>
+                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-sand-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300">مراسلات</span>
+              </div>
+              <p id="nav-user-greeting" class="text-[11px] text-gray-500 dark:text-gray-400 truncate max-w-[130px]">أهلاً، علي حسين علوان</p>
+            </div>
+          </div>
+
+          <!-- Quick Action Buttons: Create Group + Add Contact + Theme -->
+          <div class="flex items-center gap-1.5">
+            <!-- Add Contact Button -->
+            <button onclick="openModal('modal-add-contact')" title="إضافة جهة اتصال" class="p-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary dark:text-primary-light transition flex items-center justify-center">
+              <span class="material-symbols-outlined text-xl">person_add</span>
+            </button>
+
+            <!-- Create Group Button -->
+            <button onclick="openModal('modal-create-group')" title="إنشاء مجموعة جديدة" class="p-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 transition flex items-center justify-center">
+              <span class="material-symbols-outlined text-xl">group_add</span>
+            </button>
+
+            <!-- Theme Toggle -->
+            <button onclick="toggleDarkMode()" title="الوضع الليلي" class="p-2 rounded-xl bg-sand-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 transition">
+              <span class="material-symbols-outlined text-xl">dark_mode</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Search Bar (Facilitate finding friends) -->
+        <div class="relative">
+          <span class="material-symbols-outlined absolute right-3.5 top-2.5 text-gray-400 text-lg">search</span>
+          <input id="chat-search-input" onkeyup="filterChats()" type="text" placeholder="بحث عن صديق، يوزر، أو محادثة..." class="w-full pr-10 pl-9 py-2 text-xs rounded-xl bg-sand-100/80 dark:bg-[#121924] border border-sand-200 dark:border-gray-700 focus:outline-none focus:border-primary text-gray-800 dark:text-gray-200 placeholder-gray-400 transition">
+          <button id="clear-search-btn" onclick="clearSearch()" class="hidden absolute left-3 top-2.5 text-gray-400 hover:text-gray-600">
+            <span class="material-symbols-outlined text-base">close</span>
+          </button>
+        </div>
+
+        <!-- Filter Tabs (All, Unread, Groups, Streaks) -->
+        <div class="flex items-center gap-2 overflow-x-auto py-2 no-scrollbar text-xs">
+          <button onclick="setFilter('all')" id="filter-all" class="filter-chip px-3 py-1 rounded-full bg-primary text-white font-bold whitespace-nowrap shadow-sm">الكل</button>
+          <button onclick="setFilter('unread')" id="filter-unread" class="filter-chip px-3 py-1 rounded-full bg-sand-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap flex items-center gap-1">
+            <span>غير مقروءة</span>
+            <span class="bg-primary text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">3</span>
+          </button>
+          <button onclick="setFilter('groups')" id="filter-groups" class="filter-chip px-3 py-1 rounded-full bg-sand-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap">المجموعات</button>
+          <button onclick="setFilter('streaks')" id="filter-streaks" class="filter-chip px-3 py-1 rounded-full bg-sand-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-medium whitespace-nowrap flex items-center gap-1">
+            <span>🔥 الشعلة</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Online Friends / Stories Bar -->
+      <div class="px-4 py-3 border-b border-sand-200/60 dark:border-gray-800/80 bg-sand-50/50 dark:bg-[#0e1620]">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-gray-700 dark:text-gray-300">المتصلون الآن والقصص</span>
+          <span class="text-[11px] text-primary dark:text-primary-light font-semibold">عرض الكل (12)</span>
+        </div>
+        <div class="flex items-center gap-3 overflow-x-auto no-scrollbar pb-1">
+          <!-- User story button -->
+          <div class="flex flex-col items-center flex-shrink-0 cursor-pointer">
+            <div class="relative w-14 h-14 rounded-full p-0.5 border-2 border-dashed border-primary flex items-center justify-center bg-white dark:bg-gray-800">
+              <div id="story-my-avatar" class="w-full h-full rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-sm">
+                ع
+              </div>
+              <div class="absolute bottom-0 right-0 bg-primary text-white rounded-full p-0.5 border border-white dark:border-gray-900">
+                <span class="material-symbols-outlined text-xs">add</span>
+              </div>
+            </div>
+            <span class="text-[10px] mt-1 font-medium">قصتك</span>
+          </div>
+
+          <!-- Contact Stories with stylized avatars -->
+          <div class="flex flex-col items-center flex-shrink-0 cursor-pointer" onclick="openChatDetail('محمد احمد حسن', '@mohammed_art')">
+            <div class="w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr from-amber-500 via-primary to-teal-400">
+              <div class="w-full h-full rounded-full bg-amber-700 text-white flex items-center justify-center font-bold text-base border-2 border-white dark:border-gray-900">
+                م
+              </div>
+            </div>
+            <span class="text-[10px] mt-1 font-semibold truncate max-w-[56px]">محمد احمد حسن</span>
+          </div>
+
+          <div class="flex flex-col items-center flex-shrink-0 cursor-pointer" onclick="openChatDetail('محمد احمد جبار', '@mohammed_j')">
+            <div class="w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr from-amber-500 via-primary to-teal-400">
+              <div class="w-full h-full rounded-full bg-teal-700 text-white flex items-center justify-center font-bold text-base border-2 border-white dark:border-gray-900">
+                م
+              </div>
+            </div>
+            <span class="text-[10px] mt-1 font-semibold truncate max-w-[56px]">محمد احمد جبار</span>
+          </div>
+
+          <div class="flex flex-col items-center flex-shrink-0 cursor-pointer" onclick="openChatDetail('علي ياسر', '@ali_yaser')">
+            <div class="w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr from-amber-500 via-primary to-teal-400">
+              <div class="w-full h-full rounded-full bg-indigo-700 text-white flex items-center justify-center font-bold text-base border-2 border-white dark:border-gray-900">
+                ع
+              </div>
+            </div>
+            <span class="text-[10px] mt-1 font-semibold truncate max-w-[56px]">علي ياسر</span>
+          </div>
+
+          <div class="flex flex-col items-center flex-shrink-0 cursor-pointer" onclick="openChatDetail('عباس حسين', '@abbas_hussain')">
+            <div class="w-14 h-14 rounded-full p-0.5 bg-gray-300 dark:bg-gray-700">
+              <div class="w-full h-full rounded-full bg-pink-700 text-white flex items-center justify-center font-bold text-base border-2 border-white dark:border-gray-900">
+                ع
+              </div>
+            </div>
+            <span class="text-[10px] mt-1 font-semibold truncate max-w-[56px]">عباس حسين</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Items List (WhatsApp style) -->
+      <div id="chat-list-container" class="flex-1 overflow-y-auto divide-y divide-sand-200/50 dark:divide-gray-800/80 pb-20">
+        
+        <!-- Chat 1: Mohammed Ahmed Jabbar (Streak 🔥 18) -->
+        <div class="chat-item flex items-center gap-3 p-3.5 hover:bg-sand-100/60 dark:hover:bg-gray-800/50 cursor-pointer transition" data-name="محمد احمد جبار" data-user="@mohammed_j" data-type="direct" data-streak="true" data-unread="true" onclick="openChatDetail('محمد احمد جبار', '@mohammed_j')">
+          <div class="relative flex-shrink-0">
+            <div class="w-12 h-12 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold text-lg">
+              م
+            </div>
+            <span class="w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-gray-900 absolute bottom-0 right-0"></span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <div class="flex items-center gap-1.5">
+                <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">محمد احمد جبار</h3>
+                <span class="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 font-extrabold">
+                  🔥 18 يوماً
+                </span>
+              </div>
+              <span class="text-[11px] text-primary font-bold">10:42 ص</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-300 truncate">
+                <span class="material-symbols-outlined text-primary text-sm">mic</span>
+                <span class="truncate font-medium">ملاحظة صوتية (0:48)</span>
+              </div>
+              <span class="bg-primary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">2</span>
+            </div>
+            <p class="text-[10px] text-gray-400 font-mono mt-0.5">@mohammed_j</p>
+          </div>
+        </div>
+
+        <!-- Chat 2: Ali Yaser -->
+        <div class="chat-item flex items-center gap-3 p-3.5 hover:bg-sand-100/60 dark:hover:bg-gray-800/50 cursor-pointer transition" data-name="علي ياسر" data-user="@ali_yaser" data-type="direct" data-streak="false" data-unread="false" onclick="openChatDetail('علي ياسر', '@ali_yaser')">
+          <div class="relative flex-shrink-0">
+            <div class="w-12 h-12 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-lg">
+              ع
+            </div>
+            <span class="w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-gray-900 absolute bottom-0 right-0"></span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">علي ياسر</h3>
+              <span class="text-[11px] text-gray-400">09:15 ص</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 truncate">
+                <span class="material-symbols-outlined text-teal-600 text-sm">done_all</span>
+                <span class="truncate">تم الاتفاق، سأرسل لك المخطط الهندسي لمركز بغداد...</span>
+              </div>
+            </div>
+            <p class="text-[10px] text-gray-400 font-mono mt-0.5">@ali_yaser</p>
+          </div>
+        </div>
+
+        <!-- Chat 3: Group "ملتقى الرافدين للابتكار" -->
+        <div class="chat-item flex items-center gap-3 p-3.5 hover:bg-sand-100/60 dark:hover:bg-gray-800/50 cursor-pointer transition" data-name="ملتقى الرافدين للابتكار" data-user="@iraq_innovators" data-type="group" data-streak="false" data-unread="true" onclick="openChatDetail('ملتقى الرافدين للابتكار', '@iraq_innovators')">
+          <div class="relative flex-shrink-0">
+            <div class="w-12 h-12 rounded-2xl bg-primary/10 dark:bg-primary/20 text-primary dark:text-primary-light flex items-center justify-center font-bold">
+              <span class="material-symbols-outlined text-2xl">groups</span>
+            </div>
+            <span class="text-[9px] font-bold bg-amber-500 text-white px-1 rounded absolute -top-1 -right-1">مجموعة</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <div class="flex items-center gap-1.5">
+                <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">ملتقى الرافدين للابتكار</h3>
+                <span class="text-[10px] px-1.5 py-0.2 rounded bg-sand-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300">6+ أعضاء</span>
+              </div>
+              <span class="text-[11px] text-primary font-bold">أمس</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-300 truncate">
+                <span class="font-bold text-primary">حيدر:</span>
+                <span class="truncate">موقع الاجتماع: شارع المتنبي - قشلة بغداد</span>
+              </div>
+              <span class="bg-primary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0">5</span>
+            </div>
+            <p class="text-[10px] text-gray-400 font-mono mt-0.5">@iraq_innovators</p>
+          </div>
+        </div>
+
+        <!-- Chat 4: Mohammed Ahmed Hassan -->
+        <div class="chat-item flex items-center gap-3 p-3.5 hover:bg-sand-100/60 dark:hover:bg-gray-800/50 cursor-pointer transition" data-name="محمد احمد حسن" data-user="@mohammed_art" data-type="direct" data-streak="false" data-unread="false" onclick="openChatDetail('محمد احمد حسن', '@mohammed_art')">
+          <div class="relative flex-shrink-0">
+            <div class="w-12 h-12 rounded-full bg-amber-700 text-white flex items-center justify-center font-bold text-lg">
+              م
+            </div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">محمد احمد حسن</h3>
+              <span class="text-[11px] text-gray-400">أمس</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 truncate">
+                <span class="material-symbols-outlined text-sm">photo</span>
+                <span class="truncate">صورة العمل الفني الجديد لبوابة النهر</span>
+              </div>
+            </div>
+            <p class="text-[10px] text-gray-400 font-mono mt-0.5">@mohammed_art</p>
+          </div>
+        </div>
+
+        <!-- Chat 5: Abbas Hussain (Streak 🔥 7) -->
+        <div class="chat-item flex items-center gap-3 p-3.5 hover:bg-sand-100/60 dark:hover:bg-gray-800/50 cursor-pointer transition" data-name="عباس حسين" data-user="@abbas_hussain" data-type="direct" data-streak="true" data-unread="false" onclick="openChatDetail('عباس حسين', '@abbas_hussain')">
+          <div class="relative flex-shrink-0">
+            <div class="w-12 h-12 rounded-full bg-pink-700 text-white flex items-center justify-center font-bold text-lg">
+              ع
+            </div>
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between mb-0.5">
+              <div class="flex items-center gap-1.5">
+                <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">عباس حسين</h3>
+                <span class="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 font-extrabold">
+                  🔥 7 أيام
+                </span>
+              </div>
+              <span class="text-[11px] text-gray-400">الثلاثاء</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 truncate">
+                <span class="material-symbols-outlined text-teal-600 text-sm">done</span>
+                <span class="truncate">شكراً جزيلاً، التوثيق وصل بنجاح وستتم مراجعته</span>
+              </div>
+            </div>
+            <p class="text-[10px] text-gray-400 font-mono mt-0.5">@abbas_hussain</p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Floating Action Button (New Chat WhatsApp style) -->
+      <div class="fixed bottom-20 left-6 z-30">
+        <button onclick="openModal('modal-add-contact')" class="w-14 h-14 rounded-2xl bg-primary hover:bg-primary-dark text-white shadow-xl shadow-primary/40 flex items-center justify-center active:scale-95 transition">
+          <span class="material-symbols-outlined text-2xl">chat</span>
+        </button>
+      </div>
+
+      <!-- Bottom Navigation Bar -->
+      <div class="bg-white/95 dark:bg-surface-cardDark/95 backdrop-blur border-t border-sand-200 dark:border-gray-800 px-6 py-2.5 flex items-center justify-between fixed bottom-0 max-w-md w-full z-20">
+        <button class="flex flex-col items-center gap-1 text-primary dark:text-primary-light">
+          <span class="material-symbols-outlined fill text-2xl">chat</span>
+          <span class="text-[10px] font-bold">المحادثات</span>
+        </button>
+
+        <button onclick="showToast('ميزة المكالمات الفورية WebRTC مع Google STUN')" class="flex flex-col items-center gap-1 text-gray-400 hover:text-primary transition">
+          <span class="material-symbols-outlined text-2xl">call</span>
+          <span class="text-[10px] font-medium">المكالمات</span>
+        </button>
+
+        <button onclick="openModal('modal-add-contact')" class="flex flex-col items-center gap-1 text-gray-400 hover:text-primary transition">
+          <span class="material-symbols-outlined text-2xl">contacts</span>
+          <span class="text-[10px] font-medium">جهات الاتصال</span>
+        </button>
+
+        <button onclick="goToProfileSetup()" class="flex flex-col items-center gap-1 text-gray-400 hover:text-primary transition">
+          <span class="material-symbols-outlined text-2xl">account_circle</span>
+          <span class="text-[10px] font-medium">حسابي</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ==============================================
+         MODAL 1: ADD CONTACT (Via Username or Email)
+    ============================================== -->
+    <div id="modal-add-contact" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+      <div class="bg-white dark:bg-surface-cardDark w-full max-w-sm rounded-3xl p-5 shadow-2xl border border-sand-200 dark:border-gray-800 fade-in">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-2xl">person_add</span>
+            <h3 class="font-bold text-sm">إضافة صديق جديد</h3>
+          </div>
+          <button onclick="closeModal('modal-add-contact')" class="text-gray-400 hover:text-gray-600 p-1">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div class="mt-4 space-y-3">
+          <p class="text-xs text-gray-600 dark:text-gray-300">أدخل اسم المستخدم (اليوزر) أو البريد الإلكتروني لإضافة صديقك فوراً:</p>
+          
+          <!-- Method Selection Tabs -->
+          <div class="grid grid-cols-2 gap-2 bg-sand-100 dark:bg-gray-800 p-1 rounded-xl text-xs font-bold">
+            <button id="tab-add-username" onclick="switchAddMode('username')" class="py-1.5 rounded-lg bg-white dark:bg-gray-700 text-primary dark:text-primary-light shadow-sm">باليوزر نيم</button>
+            <button id="tab-add-email" onclick="switchAddMode('email')" class="py-1.5 rounded-lg text-gray-500 hover:text-gray-800 dark:hover:text-gray-200">بالبريد الإلكتروني</button>
+          </div>
+
+          <!-- Input field -->
+          <div>
+            <div id="add-by-username-wrap">
+              <label class="block text-xs font-semibold mb-1">اسم المستخدم (Username)</label>
+              <div class="relative" dir="ltr">
+                <span class="absolute left-3 top-2.5 text-primary font-bold">@</span>
+                <input id="new-contact-username" type="text" placeholder="ahmed_baghdad" class="w-full pl-8 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-sand-50 dark:bg-[#121924] font-mono focus:outline-none focus:border-primary">
+              </div>
+            </div>
+
+            <div id="add-by-email-wrap" class="hidden">
+              <label class="block text-xs font-semibold mb-1">البريد الإلكتروني</label>
+              <div class="relative" dir="ltr">
+                <span class="material-symbols-outlined absolute left-3 top-2.5 text-gray-400 text-base">mail</span>
+                <input id="new-contact-email" type="email" placeholder="friend@djrat.iq" class="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-sand-50 dark:bg-[#121924] focus:outline-none focus:border-primary">
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick suggestion -->
+          <div class="p-2.5 rounded-xl bg-primary/5 dark:bg-primary/10 border border-primary/20 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+                أ
+              </div>
+              <div>
+                <p class="text-xs font-bold">أحمد الفراتي</p>
+                <p class="text-[10px] text-gray-500 font-mono">@ahmed_furat</p>
+              </div>
+            </div>
+            <button onclick="quickAddFriend('أحمد الفراتي', '@ahmed_furat')" class="text-xs px-2.5 py-1 bg-primary text-white rounded-lg font-bold hover:bg-primary-dark">إضافة</button>
+          </div>
+        </div>
+
+        <div class="mt-5 flex gap-2">
+          <button onclick="confirmAddContact()" class="flex-1 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1">
+            <span class="material-symbols-outlined text-sm">person_add</span>
+            <span>إضافة جهة الاتصال</span>
+          </button>
+          <button onclick="closeModal('modal-add-contact')" class="px-4 py-2.5 bg-sand-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-xs">إلغاء</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==============================================
+         MODAL 2: CREATE GROUP (Select Members)
+    ============================================== -->
+    <div id="modal-create-group" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
+      <div class="bg-white dark:bg-surface-cardDark w-full max-w-sm rounded-3xl p-5 shadow-2xl border border-sand-200 dark:border-gray-800 fade-in flex flex-col max-h-[85vh]">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-amber-600 text-2xl">group_add</span>
+            <div>
+              <h3 class="font-bold text-sm">إنشاء مجموعة جديدة</h3>
+              <p class="text-[10px] text-gray-400">حدد من تريد إضافته للمجموعة</p>
+            </div>
+          </div>
+          <button onclick="closeModal('modal-create-group')" class="text-gray-400 hover:text-gray-600 p-1">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div class="mt-3 space-y-3 overflow-y-auto flex-1 pr-0.5">
+          <div>
+            <label class="block text-xs font-semibold mb-1">اسم المجموعة</label>
+            <input id="group-name-input" type="text" placeholder="مثال: رواد أعمال دجلة" value="مجموعة أصدقاء دجرات" class="w-full px-3 py-2 text-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-sand-50 dark:bg-[#121924] focus:outline-none focus:border-primary">
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1.5">
+              <label class="text-xs font-semibold">اختيار الأعضاء للإضافة</label>
+              <span id="selected-members-count" class="text-[11px] text-primary font-bold">2 محددين</span>
+            </div>
+
+            <!-- List of selectable friends -->
+            <div class="space-y-1.5">
+              
+              <label class="flex items-center justify-between p-2 rounded-xl bg-sand-50 dark:bg-[#121924] border border-sand-200 dark:border-gray-800 cursor-pointer">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-full bg-teal-600 text-white flex items-center justify-center font-bold text-xs">
+                    م
+                  </div>
+                  <div>
+                    <p class="text-xs font-bold">محمد احمد جبار</p>
+                    <p class="text-[10px] text-gray-400 font-mono">@mohammed_j</p>
+                  </div>
+                </div>
+                <input type="checkbox" checked onchange="updateSelectedCount()" class="member-check accent-primary w-4 h-4 rounded">
+              </label>
+
+              <label class="flex items-center justify-between p-2 rounded-xl bg-sand-50 dark:bg-[#121924] border border-sand-200 dark:border-gray-800 cursor-pointer">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
+                    ع
+                  </div>
+                  <div>
+                    <p class="text-xs font-bold">علي ياسر</p>
+                    <p class="text-[10px] text-gray-400 font-mono">@ali_yaser</p>
+                  </div>
+                </div>
+                <input type="checkbox" checked onchange="updateSelectedCount()" class="member-check accent-primary w-4 h-4 rounded">
+              </label>
+
+              <label class="flex items-center justify-between p-2 rounded-xl bg-sand-50 dark:bg-[#121924] border border-sand-200 dark:border-gray-800 cursor-pointer">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-full bg-amber-700 text-white flex items-center justify-center font-bold text-xs">
+                    م
+                  </div>
+                  <div>
+                    <p class="text-xs font-bold">محمد احمد حسن</p>
+                    <p class="text-[10px] text-gray-400 font-mono">@mohammed_art</p>
+                  </div>
+                </div>
+                <input type="checkbox" onchange="updateSelectedCount()" class="member-check accent-primary w-4 h-4 rounded">
+              </label>
+
+              <label class="flex items-center justify-between p-2 rounded-xl bg-sand-50 dark:bg-[#121924] border border-sand-200 dark:border-gray-800 cursor-pointer">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-8 h-8 rounded-full bg-pink-700 text-white flex items-center justify-center font-bold text-xs">
+                    ع
+                  </div>
+                  <div>
+                    <p class="text-xs font-bold">عباس حسين</p>
+                    <p class="text-[10px] text-gray-400 font-mono">@abbas_hussain</p>
+                  </div>
+                </div>
+                <input type="checkbox" onchange="updateSelectedCount()" class="member-check accent-primary w-4 h-4 rounded">
+              </label>
+
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-gray-100 dark:border-gray-800 flex gap-2">
+          <button onclick="confirmCreateGroup()" class="flex-1 py-2.5 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold text-xs flex items-center justify-center gap-1">
+            <span class="material-symbols-outlined text-sm">check</span>
+            <span>إنشاء المجموعة الآن</span>
+          </button>
+          <button onclick="closeModal('modal-create-group')" class="px-4 py-2.5 bg-sand-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-xs">إلغاء</button>
+        </div>
+      </div>
+    </div>
+
+    
+    <!-- ==============================================
+         إضافات دجرات: غرفة المحادثة / المكالمات / جهات الاتصال / القوائم / شاشة المكالمة
+    ============================================== -->
+
+    <!-- غرفة المحادثة -->
+    <div id="dj-chat" class="dj-wall hidden flex-col z-40 bg-surface-light dark:bg-surface-dark">
+      <div id="dj-chat-head" class="flex items-center gap-2 px-2 py-2.5 bg-white dark:bg-surface-cardDark border-b border-sand-200 dark:border-gray-800 shadow-sm cursor-pointer">
+        <button id="dj-chat-back" class="p-2 rounded-full text-gray-700 dark:text-gray-200 hover:bg-sand-100 dark:hover:bg-gray-800" aria-label="رجوع"><span class="material-symbols-outlined">arrow_forward</span></button>
+        <div id="dj-chat-av"></div>
+        <div class="flex-1 min-w-0">
+          <h2 id="dj-chat-name" class="text-sm font-bold truncate"></h2>
+          <p id="dj-chat-status" class="text-[11px] text-gray-500 dark:text-gray-400 truncate"></p>
+        </div>
+        <button id="dj-chat-video" class="p-2 rounded-full text-primary dark:text-primary-light hover:bg-primary/10" aria-label="مكالمة فيديو"><span class="material-symbols-outlined">videocam</span></button>
+        <button id="dj-chat-audio" class="p-2 rounded-full text-primary dark:text-primary-light hover:bg-primary/10" aria-label="مكالمة صوتية"><span class="material-symbols-outlined">call</span></button>
+        <button id="dj-chat-more" class="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-sand-100 dark:hover:bg-gray-800" aria-label="المزيد"><span class="material-symbols-outlined">more_vert</span></button>
+      </div>
+      <div id="dj-nc-banner" class="hidden items-center justify-between gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border-b border-amber-200 dark:border-amber-900 text-xs">
+        <span class="text-amber-800 dark:text-amber-300 font-semibold">هذا الشخص ليس في جهات اتصالك</span>
+        <div class="flex gap-1.5"><button id="dj-nc-add" class="px-2.5 py-1 rounded-lg bg-primary text-white font-bold">إضافة</button><button id="dj-nc-block" class="px-2.5 py-1 rounded-lg bg-red-600 text-white font-bold">حظر</button></div>
+      </div>
+      <div id="dj-pinned" class="hidden items-center gap-2 px-3 py-2 bg-white/95 dark:bg-surface-cardDark/95 border-b border-sand-200 dark:border-gray-800 cursor-pointer">
+        <span class="material-symbols-outlined text-primary text-lg">push_pin</span>
+        <div class="min-w-0 flex-1"><p class="text-[10px] font-bold text-primary">رسالة مثبتة</p><p id="dj-pinned-text" class="text-xs truncate text-gray-700 dark:text-gray-300"></p></div>
+      </div>
+      <div id="dj-msgs" class="dj-msgs flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-1.5"></div>
+
+      <div class="relative">
+        <div id="dj-attach" class="hidden absolute bottom-full right-3 mb-2 bg-white dark:bg-surface-cardDark rounded-2xl shadow-2xl border border-sand-200 dark:border-gray-700 p-2 grid grid-cols-4 gap-1 z-10 dj-sheet-panel">
+          <button data-att="media" class="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-sand-100 dark:hover:bg-gray-800 text-[10px] font-semibold"><span class="w-11 h-11 rounded-full bg-indigo-600 text-white flex items-center justify-center"><span class="material-symbols-outlined">photo_library</span></span>معرض</button>
+          <button data-att="cam" class="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-sand-100 dark:hover:bg-gray-800 text-[10px] font-semibold"><span class="w-11 h-11 rounded-full bg-pink-600 text-white flex items-center justify-center"><span class="material-symbols-outlined">photo_camera</span></span>كاميرا</button>
+          <button data-att="file" class="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-sand-100 dark:hover:bg-gray-800 text-[10px] font-semibold"><span class="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center"><span class="material-symbols-outlined">description</span></span>ملف</button>
+          <button data-att="loc" class="flex flex-col items-center gap-1 p-2 rounded-xl hover:bg-sand-100 dark:hover:bg-gray-800 text-[10px] font-semibold"><span class="w-11 h-11 rounded-full bg-emerald-600 text-white flex items-center justify-center"><span class="material-symbols-outlined">location_on</span></span>موقع</button>
+        </div>
+        <div id="dj-ctx" class="hidden items-center gap-2 px-3 py-2 bg-white dark:bg-surface-cardDark border-t border-sand-200 dark:border-gray-800">
+          <span id="dj-ctx-ic" class="material-symbols-outlined text-primary">reply</span>
+          <div class="min-w-0 flex-1 border-s-4 border-primary ps-2"><p id="dj-ctx-title" class="text-[11px] font-bold text-primary"></p><p id="dj-ctx-text" class="text-xs truncate text-gray-600 dark:text-gray-300"></p></div>
+          <button id="dj-ctx-x" class="p-1 text-gray-500" aria-label="إلغاء"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="dj-composer" class="flex items-end gap-2 px-2 py-2 bg-white dark:bg-surface-cardDark border-t border-sand-200 dark:border-gray-800">
+          <button id="dj-attach-btn" class="p-2.5 rounded-full text-gray-500 dark:text-gray-300 hover:bg-sand-100 dark:hover:bg-gray-800" aria-label="إرفاق"><span class="material-symbols-outlined">attach_file</span></button>
+          <textarea id="dj-input" rows="1" placeholder="اكتب رسالة" class="flex-1 resize-none px-3.5 py-2.5 text-sm rounded-2xl border border-gray-200 dark:border-gray-700 bg-sand-50 dark:bg-[#121924] focus:outline-none focus:border-primary" style="user-select:text;-webkit-user-select:text"></textarea>
+          <button id="dj-send" class="w-11 h-11 rounded-full bg-primary hover:bg-primary-dark text-white flex items-center justify-center shadow-md flex-shrink-0" aria-label="إرسال"><span id="dj-send-ic" class="material-symbols-outlined">mic</span></button>
+        </div>
+        <div id="dj-rec" class="hidden items-center gap-3 px-3 py-3 bg-white dark:bg-surface-cardDark border-t border-sand-200 dark:border-gray-800">
+          <button id="dj-rec-cancel" class="p-2 rounded-full text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30" aria-label="إلغاء"><span class="material-symbols-outlined">delete</span></button>
+          <span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse"></span>
+          <span id="dj-rec-time" class="flex-1 font-mono text-sm">00:00</span>
+          <button id="dj-rec-send" class="w-11 h-11 rounded-full bg-primary text-white flex items-center justify-center" aria-label="إرسال"><span class="material-symbols-outlined">send</span></button>
+        </div>
+        <div id="dj-blocked" class="hidden items-center justify-between gap-2 px-4 py-3 bg-white dark:bg-surface-cardDark border-t border-sand-200 dark:border-gray-800 text-xs">
+          <span class="text-gray-600 dark:text-gray-300">لقد حظرت هذا الشخص</span>
+          <button id="dj-unblock" class="px-3 py-1.5 rounded-lg bg-primary text-white font-bold">إلغاء الحظر</button>
+        </div>
+      </div>
+      <input id="dj-file-media" type="file" accept="image/*,video/*" multiple class="hidden">
+      <input id="dj-file-cam" type="file" accept="image/*" capture="environment" class="hidden">
+      <input id="dj-file-any" type="file" multiple class="hidden">
+    </div>
+
+    <!-- سجل المكالمات -->
+    <div id="dj-calls" class="dj-wall hidden flex-col z-30 bg-surface-light dark:bg-surface-dark">
+      <div class="bg-white dark:bg-surface-cardDark border-b border-sand-200 dark:border-gray-800 px-4 pt-4 pb-2 shadow-sm">
+        <div class="flex items-center justify-between mb-2">
+          <h1 class="text-lg font-black text-primary dark:text-primary-light">المكالمات</h1>
+          <button id="dj-calls-new" class="p-2 rounded-xl bg-primary/10 text-primary dark:text-primary-light" aria-label="مكالمة جديدة"><span class="material-symbols-outlined text-xl">add_call</span></button>
+        </div>
+        <div class="flex items-center gap-2 text-xs"><button id="dj-cf-all" class="px-3 py-1 rounded-full bg-primary text-white font-bold">الكل</button><button id="dj-cf-missed" class="px-3 py-1 rounded-full bg-sand-100 dark:bg-gray-800">الفائتة</button></div>
+      </div>
+      <div id="dj-calls-list" class="flex-1 overflow-y-auto divide-y divide-sand-200/50 dark:divide-gray-800/80"></div>
+      <div id="dj-calls-nav" class="bg-white/95 dark:bg-surface-cardDark/95 border-t border-sand-200 dark:border-gray-800 px-6 py-2.5 flex items-center justify-between"></div>
+    </div>
+
+    <!-- جهات الاتصال -->
+    <div id="dj-contacts" class="dj-wall hidden flex-col z-30 bg-surface-light dark:bg-surface-dark">
+      <div class="bg-white dark:bg-surface-cardDark border-b border-sand-200 dark:border-gray-800 px-4 pt-4 pb-3 shadow-sm">
+        <div class="flex items-baseline justify-between mb-2"><h1 class="text-lg font-black text-primary dark:text-primary-light">جهات الاتصال</h1><span id="dj-contacts-count" class="text-[11px] text-gray-500"></span></div>
+        <div class="relative"><span class="material-symbols-outlined absolute right-3.5 top-2.5 text-gray-400 text-lg">search</span>
+          <input id="dj-contacts-search" type="text" placeholder="بحث في جهات الاتصال" class="w-full pr-10 pl-3 py-2 text-xs rounded-xl bg-sand-100/80 dark:bg-[#121924] border border-sand-200 dark:border-gray-800 focus:outline-none focus:border-primary"></div>
+      </div>
+      <div id="dj-contacts-list" class="flex-1 overflow-y-auto divide-y divide-sand-200/50 dark:divide-gray-800/80"></div>
+      <div id="dj-contacts-nav" class="bg-white/95 dark:bg-surface-cardDark/95 border-t border-sand-200 dark:border-gray-800 px-6 py-2.5 flex items-center justify-between"></div>
+    </div>
+
+    <!-- المحادثات المؤرشفة -->
+    <div id="dj-archived" class="dj-wall hidden flex-col z-40 bg-surface-light dark:bg-surface-dark">
+      <div class="flex items-center gap-2 px-2 py-3 bg-white dark:bg-surface-cardDark border-b border-sand-200 dark:border-gray-800 shadow-sm">
+        <button id="dj-archived-back" class="p-2 rounded-full hover:bg-sand-100 dark:hover:bg-gray-800" aria-label="رجوع"><span class="material-symbols-outlined">arrow_forward</span></button>
+        <h2 class="text-base font-bold">المحادثات المؤرشفة</h2>
+      </div>
+      <div id="dj-archived-list" class="flex-1 overflow-y-auto divide-y divide-sand-200/50 dark:divide-gray-800/80"></div>
+    </div>
+
+    <!-- قائمة الخيارات السفلية -->
+    <div id="dj-sheet" class="dj-wall hidden items-end z-[60] bg-black/50">
+      <div class="dj-sheet-panel w-full bg-white dark:bg-surface-cardDark rounded-t-3xl pb-4 pt-2 shadow-2xl max-h-[80vh] overflow-y-auto">
+        <div class="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-700 mx-auto mb-2"></div>
+        <div id="dj-sheet-head" class="px-5 pb-2"></div>
+        <div id="dj-sheet-list"></div>
+      </div>
+    </div>
+
+    <!-- تأكيد -->
+    <div id="dj-confirm" class="dj-wall hidden items-center justify-center z-[65] bg-black/60 p-6">
+      <div class="bg-white dark:bg-surface-cardDark w-full max-w-xs rounded-3xl p-5 shadow-2xl border border-sand-200 dark:border-gray-800 fade-in">
+        <h3 id="dj-confirm-title" class="font-bold text-sm mb-1.5"></h3>
+        <p id="dj-confirm-text" class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed"></p>
+        <div class="mt-4 flex gap-2"><button id="dj-confirm-ok" class="flex-1 py-2.5 rounded-xl font-bold text-xs text-white bg-red-600"></button><button id="dj-confirm-no" class="px-4 py-2.5 bg-sand-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-semibold text-xs">إلغاء</button></div>
+      </div>
+    </div>
+
+    <!-- إعادة التوجيه -->
+    <div id="dj-forward" class="dj-wall hidden items-end z-[60] bg-black/60">
+      <div class="dj-sheet-panel w-full bg-white dark:bg-surface-cardDark rounded-t-3xl p-5 shadow-2xl flex flex-col max-h-[85vh]">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary">forward</span><h3 class="font-bold text-sm">إعادة توجيه إلى</h3></div><button id="dj-fw-close" class="p-1 text-gray-400" aria-label="إغلاق"><span class="material-symbols-outlined">close</span></button></div>
+        <div id="dj-fw-list" class="mt-3 space-y-1.5 overflow-y-auto flex-1"></div>
+        <div class="mt-3 pt-3 border-t border-gray-100 dark:border-gray-800 flex items-center gap-3"><span id="dj-fw-count" class="text-[11px] text-primary font-bold flex-1">0 محددين</span><button id="dj-fw-send" class="px-5 py-2.5 bg-primary text-white rounded-xl font-bold text-xs flex items-center gap-1"><span class="material-symbols-outlined text-sm">send</span>إرسال</button></div>
+      </div>
+    </div>
+
+    <!-- عرض الصورة -->
+    <div id="dj-lightbox" class="dj-wall hidden items-center justify-center z-[70] bg-black/90 cursor-zoom-out"><img id="dj-lightbox-img" class="max-w-full max-h-full object-contain" alt=""></div>
+
+    <!-- القصص -->
+    <input id="dj-file-story" type="file" accept="image/*" class="hidden">
+    <div id="dj-story" class="dj-wall hidden flex-col z-[75] bg-black text-white">
+      <div id="dj-st-bars" class="flex gap-1 px-3 pt-3"></div>
+      <div class="flex items-center gap-2 px-3 py-2">
+        <div id="dj-st-av"></div>
+        <div class="flex-1 min-w-0"><p id="dj-st-name" class="text-sm font-bold truncate"></p><p id="dj-st-time" class="text-[11px] opacity-80"></p></div>
+        <button id="dj-st-close" class="p-2 rounded-full hover:bg-white/10" aria-label="إغلاق"><span class="material-symbols-outlined">close</span></button>
+      </div>
+      <div class="relative flex-1 flex items-center justify-center overflow-hidden">
+        <img id="dj-st-img" class="hidden max-w-full max-h-full object-contain" alt="">
+        <div id="dj-st-text" class="hidden w-full h-full flex items-center justify-center p-8 text-center text-2xl font-bold leading-relaxed break-words"></div>
+        <div id="dj-st-prev" class="absolute top-0 bottom-0 right-0 w-1/3"></div>
+        <div id="dj-st-next" class="absolute top-0 bottom-0 left-0 w-2/3"></div>
+      </div>
+      <div id="dj-st-foot" class="hidden items-center justify-between px-4 py-3 bg-black/60">
+        <button id="dj-st-views" class="flex items-center gap-1.5 text-sm font-semibold"><span class="material-symbols-outlined">visibility</span><span id="dj-st-vc">0</span></button>
+        <button id="dj-st-del" class="p-2 rounded-full hover:bg-white/10" aria-label="حذف"><span class="material-symbols-outlined">delete</span></button>
+      </div>
+    </div>
+    <div id="dj-snew" class="dj-wall hidden flex-col z-[75] text-white" style="background:#088395">
+      <div class="flex items-center justify-between p-3">
+        <button id="dj-sn-close" class="p-2 rounded-full hover:bg-white/10" aria-label="إغلاق"><span class="material-symbols-outlined">close</span></button>
+        <div id="dj-sn-colors" class="flex gap-2"></div>
+        <button id="dj-sn-post" class="px-4 py-1.5 rounded-full bg-white text-primary font-bold text-sm">نشر</button>
+      </div>
+      <textarea id="dj-sn-text" maxlength="280" placeholder="اكتب قصتك..." class="flex-1 bg-transparent text-white text-center text-2xl font-bold p-8 outline-none resize-none placeholder-white/60"></textarea>
+    </div>
+
+    <!-- شاشة المكالمة -->
+    <div id="dj-call" class="dj-wall hidden flex-col z-[80] text-white" style="background:linear-gradient(160deg,#0a6371 0%,#111822 70%)">
+      <video id="dj-call-remote" class="hidden absolute inset-0 w-full h-full object-cover" autoplay playsinline></video>
+      <div class="relative flex-1 flex flex-col items-center pt-16 px-6" style="text-shadow:0 1px 6px rgba(0,0,0,.5)">
+        <span class="text-[11px] font-semibold px-3 py-1 rounded-full bg-black/30 flex items-center gap-1"><span class="material-symbols-outlined text-sm">lock</span>دجرات - مكالمة مشفّرة</span>
+        <h2 id="dj-call-name" class="text-2xl font-extrabold mt-5"></h2>
+        <p id="dj-call-state" class="text-sm opacity-90 mt-1 font-mono"></p>
+        <div id="dj-call-av-wrap" class="flex mt-10"><div id="dj-call-av" class="rounded-full dj-pulse"></div></div>
+      </div>
+      <video id="dj-call-local" class="hidden absolute top-4 left-4 w-24 h-36 object-cover rounded-2xl border-2 border-white/60 shadow-2xl bg-black" autoplay playsinline muted></video>
+      <div id="dj-call-in" class="relative hidden items-center justify-center gap-14 pb-14">
+        <button id="dj-call-decline" class="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center shadow-xl" aria-label="رفض"><span class="material-symbols-outlined text-3xl">call_end</span></button>
+        <button id="dj-call-accept" class="w-16 h-16 rounded-full bg-emerald-500 flex items-center justify-center shadow-xl dj-pulse" aria-label="رد"><span class="material-symbols-outlined text-3xl">call</span></button>
+      </div>
+      <div id="dj-call-ctl" class="relative hidden items-center justify-center gap-4 pb-12">
+        <button id="dj-call-mute" class="w-14 h-14 rounded-full bg-white/20 backdrop-blur flex items-center justify-center" aria-label="كتم"><span id="dj-call-mute-ic" class="material-symbols-outlined text-2xl">mic</span></button>
+        <button id="dj-call-cam" class="w-14 h-14 rounded-full bg-white/20 backdrop-blur flex items-center justify-center" aria-label="الكاميرا"><span id="dj-call-cam-ic" class="material-symbols-outlined text-2xl">videocam</span></button>
+        <button id="dj-call-flip" class="w-14 h-14 rounded-full bg-white/20 backdrop-blur flex items-center justify-center" aria-label="تبديل الكاميرا"><span class="material-symbols-outlined text-2xl">cameraswitch</span></button>
+        <button id="dj-call-end" class="w-16 h-16 rounded-full bg-red-600 flex items-center justify-center shadow-xl" aria-label="إنهاء"><span class="material-symbols-outlined text-3xl">call_end</span></button>
+      </div>
+    </div>
+
+
+<!-- Notification Toast -->
+    <div id="toast" class="hidden fixed top-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 bg-gray-900 text-white text-xs font-bold rounded-2xl shadow-2xl flex items-center gap-2 border border-primary/30 fade-in">
+      <span class="material-symbols-outlined text-emerald-400 text-base" id="toast-icon">check_circle</span>
+      <span id="toast-message">تمت العملية بنجاح</span>
+    </div>
+
+  </div>
+
+  <!-- Interactive JavaScript Logic -->
+  <script>
+    // App State
+    let currentUser = {
+      name: 'علي حسين علوان',
+      username: 'i_lr8',
+      bio: 'ثانويه الباب العقول',
+      avatarColor: '#088395',
+      avatarIcon: null
+    };
+
+    function updateInitial() {
+      const val = document.getElementById('profile-name-input').value.trim();
+      const initial = val ? val.charAt(0) : 'ع';
+      document.getElementById('avatar-initial-display').textContent = initial;
+    }
+
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+      const html = document.documentElement;
+      const isDark = html.classList.toggle('dark');
+      document.querySelectorAll('#theme-icon').forEach(icon => {
+        icon.textContent = isDark ? 'light_mode' : 'dark_mode';
+      });
+      showToast(isDark ? 'تم تفعيل الوضع الليلي' : 'تم تفعيل الوضع النهاري');
+    }
+
+    // View Navigation
+    function goToProfileSetup() {
+      document.getElementById('view-auth').classList.add('hidden');
+      document.getElementById('view-chats').classList.add('hidden');
+      document.getElementById('view-profile-setup').classList.remove('hidden');
+      document.getElementById('view-profile-setup').classList.add('flex');
+    }
+
+    function goToAuth() {
+      document.getElementById('view-profile-setup').classList.add('hidden');
+      document.getElementById('view-chats').classList.add('hidden');
+      document.getElementById('view-auth').classList.remove('hidden');
+      document.getElementById('view-auth').classList.add('flex');
+    }
+
+    function goToChats() {
+      document.getElementById('view-auth').classList.add('hidden');
+      document.getElementById('view-profile-setup').classList.add('hidden');
+      document.getElementById('view-chats').classList.remove('hidden');
+      document.getElementById('view-chats').classList.add('flex');
+    }
+
+    function selectThemeAvatar(color, icon) {
+      currentUser.avatarColor = color;
+      currentUser.avatarIcon = icon;
+      const box = document.getElementById('avatar-preview-container');
+      box.style.backgroundColor = color;
+      box.innerHTML = `<span class="material-symbols-outlined text-white text-3xl">${icon}</span>`;
+      showToast('تم اختيار مظهر الأيقونة');
+    }
+
+    function previewAvatar(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const box = document.getElementById('avatar-preview-container');
+          box.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover rounded-full">`;
+          currentUser.customImage = e.target.result;
+          showToast('تم تحميل الصورة الشخصية بنجاح');
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    // Mandatory Profile Validation & Entrance
+    function saveProfileAndEnterChats() {
+      const nameInput = document.getElementById('profile-name-input').value.trim();
+      const usernameInput = document.getElementById('profile-username-input').value.trim().replace(/^@/, '');
+      const bioInput = document.getElementById('profile-bio-input').value.trim();
+
+      let hasError = false;
+
+      // Validate Name (Mandatory)
+      if (!nameInput) {
+        document.getElementById('name-error').classList.remove('hidden');
+        document.getElementById('profile-name-input').focus();
+        hasError = true;
+      } else {
+        document.getElementById('name-error').classList.add('hidden');
+      }
+
+      // Validate Username (Mandatory)
+      if (!usernameInput) {
+        document.getElementById('username-error').classList.remove('hidden');
+        if (!hasError) document.getElementById('profile-username-input').focus();
+        hasError = true;
+      } else {
+        document.getElementById('username-error').classList.add('hidden');
+      }
+
+      if (hasError) {
+        showToast('يرجى ملء الاسم واليوزر إجبارياً', 'warning');
+        return;
+      }
+
+      // Save user state
+      currentUser.name = nameInput;
+      currentUser.username = usernameInput;
+      currentUser.bio = bioInput;
+
+      // Update Nav Avatars
+      const navAvatar = document.getElementById('nav-user-avatar');
+      const storyAvatar = document.getElementById('story-my-avatar');
+      const initial = currentUser.name.charAt(0);
+
+      if (currentUser.customImage) {
+        navAvatar.innerHTML = `<img src="${currentUser.customImage}" class="w-full h-full object-cover rounded-full">`;
+        storyAvatar.innerHTML = `<img src="${currentUser.customImage}" class="w-full h-full object-cover rounded-full">`;
+      } else if (currentUser.avatarIcon) {
+        navAvatar.style.backgroundColor = currentUser.avatarColor;
+        navAvatar.innerHTML = `<span class="material-symbols-outlined text-white text-base">${currentUser.avatarIcon}</span>`;
+        storyAvatar.style.backgroundColor = currentUser.avatarColor;
+        storyAvatar.innerHTML = `<span class="material-symbols-outlined text-white text-base">${currentUser.avatarIcon}</span>`;
+      } else {
+        navAvatar.textContent = initial;
+        storyAvatar.textContent = initial;
+      }
+
+      document.getElementById('nav-user-greeting').textContent = 'أهلاً، ' + currentUser.name;
+
+      showToast('أهلاً بك يا ' + currentUser.name + ' في دجرات!');
+      goToChats();
+    }
+
+    // Search and Filter Chats
+    function filterChats() {
+      const query = document.getElementById('chat-search-input').value.toLowerCase().trim();
+      const clearBtn = document.getElementById('clear-search-btn');
+      if (query.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+
+      const items = document.querySelectorAll('.chat-item');
+      items.forEach(item => {
+        const name = (item.getAttribute('data-name') || '').toLowerCase();
+        const user = (item.getAttribute('data-user') || '').toLowerCase();
+        if (name.includes(query) || user.includes(query)) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+
+    function clearSearch() {
+      document.getElementById('chat-search-input').value = '';
+      document.getElementById('clear-search-btn').classList.add('hidden');
+      filterChats();
+    }
+
+    function setFilter(type) {
+      document.querySelectorAll('.filter-chip').forEach(btn => {
+        btn.classList.remove('bg-primary', 'text-white');
+        btn.classList.add('bg-sand-100', 'dark:bg-gray-800', 'text-gray-600', 'dark:text-gray-300');
+      });
+      const activeBtn = document.getElementById('filter-' + type);
+      if (activeBtn) {
+        activeBtn.classList.remove('bg-sand-100', 'dark:bg-gray-800', 'text-gray-600', 'dark:text-gray-300');
+        activeBtn.classList.add('bg-primary', 'text-white');
+      }
+
+      const items = document.querySelectorAll('.chat-item');
+      items.forEach(item => {
+        if (type === 'all') {
+          item.style.display = 'flex';
+        } else if (type === 'unread') {
+          item.style.display = item.getAttribute('data-unread') === 'true' ? 'flex' : 'none';
+        } else if (type === 'groups') {
+          item.style.display = item.getAttribute('data-type') === 'group' ? 'flex' : 'none';
+        } else if (type === 'streaks') {
+          item.style.display = item.getAttribute('data-streak') === 'true' ? 'flex' : 'none';
+        }
+      });
+    }
+
+    // Modal Helpers
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+      document.getElementById(id).classList.add('flex');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+      document.getElementById(id).classList.remove('flex');
+    }
+
+    function switchAddMode(mode) {
+      const tabUsername = document.getElementById('tab-add-username');
+      const tabEmail = document.getElementById('tab-add-email');
+      const wrapUsername = document.getElementById('add-by-username-wrap');
+      const wrapEmail = document.getElementById('add-by-email-wrap');
+
+      if (mode === 'username') {
+        tabUsername.classList.add('bg-white', 'dark:bg-gray-700', 'text-primary', 'dark:text-primary-light', 'shadow-sm');
+        tabUsername.classList.remove('text-gray-500');
+        tabEmail.classList.remove('bg-white', 'dark:bg-gray-700', 'text-primary', 'dark:text-primary-light', 'shadow-sm');
+        tabEmail.classList.add('text-gray-500');
+        wrapUsername.classList.remove('hidden');
+        wrapEmail.classList.add('hidden');
+      } else {
+        tabEmail.classList.add('bg-white', 'dark:bg-gray-700', 'text-primary', 'dark:text-primary-light', 'shadow-sm');
+        tabEmail.classList.remove('text-gray-500');
+        tabUsername.classList.remove('bg-white', 'dark:bg-gray-700', 'text-primary', 'dark:text-primary-light', 'shadow-sm');
+        tabUsername.classList.add('text-gray-500');
+        wrapEmail.classList.remove('hidden');
+        wrapUsername.classList.add('hidden');
+      }
+    }
+
+    function confirmAddContact() {
+      const usernameInput = document.getElementById('new-contact-username').value.trim();
+      const emailInput = document.getElementById('new-contact-email').value.trim();
+      const target = usernameInput ? ('@' + usernameInput.replace(/^@/, '')) : emailInput;
+
+      if (!target) {
+        showToast('يرجى كتابة اليوزر أو البريد الإلكتروني', 'warning');
+        return;
+      }
+
+      addNewContactItem('صديق جديد (' + target + ')', target);
+      closeModal('modal-add-contact');
+      showToast('تمت إضافة ' + target + ' إلى المحادثات بنجاح');
+    }
+
+    function quickAddFriend(name, user) {
+      addNewContactItem(name, user);
+      closeModal('modal-add-contact');
+      showToast('تمت إضافة ' + name + ' بنجاح');
+    }
+
+    function addNewContactItem(name, handle) {
+      const container = document.getElementById('chat-list-container');
+      const newChat = document.createElement('div');
+      newChat.className = 'chat-item flex items-center gap-3 p-3.5 hover:bg-sand-100/60 dark:hover:bg-gray-800/50 cursor-pointer transition fade-in bg-primary/5';
+      newChat.setAttribute('data-name', name);
+      newChat.setAttribute('data-user', handle);
+      newChat.setAttribute('data-type', 'direct');
+      newChat.setAttribute('data-streak', 'false');
+      newChat.setAttribute('data-unread', 'false');
+      newChat.onclick = function() { openChatDetail(name, handle); };
+
+      newChat.innerHTML = `
+        <div class="relative flex-shrink-0">
+          <div class="w-12 h-12 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-lg">
+            ${name.charAt(0)}
+          </div>
+          <span class="w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-gray-900 absolute bottom-0 right-0"></span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between mb-0.5">
+            <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">${name}</h3>
+            <span class="text-[11px] text-primary font-bold">الآن</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-gray-500 dark:text-gray-400 truncate">جهة اتصال جديدة، اضغط لبدء المحادثة</span>
+          </div>
+          <p class="text-[10px] text-gray-400 font-mono mt-0.5">${handle}</p>
+        </div>
+      `;
+      container.insertBefore(newChat, container.firstChild);
+    }
+
+    // Group Creation Logic
+    function updateSelectedCount() {
+      const checkedBoxes = document.querySelectorAll('.member-check:checked');
+      document.getElementById('selected-members-count').textContent = checkedBoxes.length + ' محددين';
+    }
+
+    function confirmCreateGroup() {
+      const groupName = document.getElementById('group-name-input').value.trim();
+      const count = document.querySelectorAll('.member-check:checked').length;
+
+      if (!groupName) {
+        showToast('يرجى كتابة اسم المجموعة', 'warning');
+        return;
+      }
+      if (count === 0) {
+        showToast('يرجى اختيار عضو واحد على الأقل', 'warning');
+        return;
+      }
+
+      const container = document.getElementById('chat-list-container');
+      const newGroupChat = document.createElement('div');
+      newGroupChat.className = 'chat-item flex items-center gap-3 p-3.5 hover:bg-sand-100/60 dark:hover:bg-gray-800/50 cursor-pointer transition fade-in bg-amber-500/5';
+      newGroupChat.setAttribute('data-name', groupName);
+      newGroupChat.setAttribute('data-user', '@' + groupName.replace(/\s+/g, '_'));
+      newGroupChat.setAttribute('data-type', 'group');
+      newGroupChat.setAttribute('data-streak', 'false');
+      newGroupChat.setAttribute('data-unread', 'false');
+      newGroupChat.onclick = function() { openChatDetail(groupName, 'مجموعة (' + count + ' أعضاء)'); };
+
+      newGroupChat.innerHTML = `
+        <div class="relative flex-shrink-0">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-700 dark:text-amber-400 flex items-center justify-center font-bold">
+            <span class="material-symbols-outlined text-2xl">groups</span>
+          </div>
+          <span class="text-[9px] font-bold bg-amber-500 text-white px-1 rounded absolute -top-1 -right-1">جديدة</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between mb-0.5">
+            <div class="flex items-center gap-1.5">
+              <h3 class="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">${groupName}</h3>
+              <span class="text-[10px] px-1.5 py-0.2 rounded bg-sand-200 dark:bg-gray-800 text-gray-600 dark:text-gray-300">${count + 1} أعضاء</span>
+            </div>
+            <span class="text-[11px] text-primary font-bold">الآن</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-gray-500 dark:text-gray-400 truncate">لقد قمت بإنشاء المجموعة وأضفت ${count} أعضاء</span>
+          </div>
+        </div>
+      `;
+      container.insertBefore(newGroupChat, container.firstChild);
+      closeModal('modal-create-group');
+      showToast('تم إنشاء مجموعة "' + groupName + '" بنجاح');
+    }
+
+    function openChatDetail(name, handle) {
+      showToast('جاري فتح محادثة ' + name + '...');
+    }
+
+    // Toast Message
+    function showToast(msg, type = 'success') {
+      const toast = document.getElementById('toast');
+      const icon = document.getElementById('toast-icon');
+      const text = document.getElementById('toast-message');
+
+      text.textContent = msg;
+      if (type === 'warning') {
+        icon.textContent = 'warning';
+        icon.className = 'material-symbols-outlined text-amber-400 text-base';
+      } else {
+        icon.textContent = 'check_circle';
+        icon.className = 'material-symbols-outlined text-emerald-400 text-base';
+      }
+
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3000);
+    }
+  </script>
+<script>
+/* =====================================================================
+   دجرات - الإضافات: مراسلة + مكالمات + جهات اتصال + Supabase
+   هذا القسم مضاف فقط. لا يغيّر نص الكود الأصلي أعلاه، ويتولى ربط الواجهة الأصلية.
+   ===================================================================== */
+(function () {
+'use strict';
+
+/* ---------- إعدادات Supabase ----------
+   1) ضع رابط مشروعك هنا (Project Settings > API > Project URL) مثل: https://abcdxyz.supabase.co
+   2) نفّذ ملف supabase.sql مرة واحدة في SQL Editor.
+   بدون الرابط يعمل التطبيق بوضع تجريبي محلي كامل (بيانات داخل المتصفح فقط). */
+const SUPABASE_URL = 'https://bxztqgnjffnhlabdwjro.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_m8CfMRG3NOB9OPc9TPH-uQ_8xwhGTGx';
+
+const MAX_REMOTE = 25 * 1024 * 1024, MAX_LOCAL = 1.5 * 1024 * 1024;
+let sb = null;
+if (SUPABASE_URL && window.supabase && window.supabase.createClient) {
+  try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false } }); }
+  catch (e) { console.error('Supabase init failed', e); }
+}
+const SB_READY = !!sb;
+
+/* ---------- أدوات ---------- */
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const toast = (m, t) => (typeof window.showToast === 'function' ? window.showToast(m, t) : console.log(m));
+const show = el => { el.classList.remove('hidden'); el.classList.add('flex'); };
+const hide = el => { el.classList.add('hidden'); el.classList.remove('flex'); };
+const isShown = el => !el.classList.contains('hidden');
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); }));
+const tf = new Intl.DateTimeFormat('ar-IQ-u-nu-latn', { hour: 'numeric', minute: '2-digit' });
+const fmtT = ts => tf.format(new Date(ts));
+const dayKey = ts => { const d = new Date(ts); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+const dayLabel = ts => {
+  const k = dayKey(ts);
+  if (k === dayKey(Date.now())) return 'اليوم';
+  if (k === dayKey(Date.now() - 864e5)) return 'أمس';
+  return new Date(ts).toLocaleDateString('ar-IQ-u-nu-latn', { day: 'numeric', month: 'long', year: 'numeric' });
+};
+const listTime = ts => {
+  const k = dayKey(ts);
+  if (k === dayKey(Date.now())) return fmtT(ts);
+  if (k === dayKey(Date.now() - 864e5)) return 'أمس';
+  if (Date.now() - ts < 6 * 864e5) return new Date(ts).toLocaleDateString('ar-IQ-u-nu-latn', { weekday: 'long' });
+  return new Date(ts).toLocaleDateString('ar-IQ-u-nu-latn', { day: 'numeric', month: 'numeric' });
+};
+const fmtDur = s => { s = Math.max(0, Math.round(s)); const m = Math.floor(s / 60); return String(m).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0'); };
+const fmtSize = b => b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+const hashStr = s => { let h = 0; for (const c of String(s)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; };
+const COLORS = ['bg-teal-600', 'bg-indigo-600', 'bg-amber-700', 'bg-pink-700', 'bg-blue-600', 'bg-emerald-600', 'bg-purple-600', 'bg-rose-600'];
+function avatar(u, cls) {
+  cls = cls || 'w-12 h-12 text-lg';
+  u = u || { name: '؟', id: 'x' };
+  const p = u.photo || '';
+  if (/^(data:image\/|https?:\/\/)/.test(p)) return `<div class="${cls} rounded-full overflow-hidden flex-shrink-0 bg-sand-200"><img src="${esc(p)}" class="w-full h-full object-cover" alt=""></div>`;
+  if (p.indexOf('icon:') === 0) {
+    const parts = p.slice(5).split('|'), col = /^#[0-9a-f]{3,8}$/i.test(parts[1] || '') ? parts[1] : '#088395';
+    return `<div class="${cls} rounded-full text-white flex items-center justify-center flex-shrink-0" style="background:${col}"><span class="material-symbols-outlined" style="font-size:1.15em">${esc(parts[0] || 'person')}</span></div>`;
+  }
+  const c = COLORS[hashStr(u.id || u.name) % COLORS.length];
+  return `<div class="${cls} rounded-full ${c} text-white flex items-center justify-center font-bold flex-shrink-0">${esc((u.name || '؟').trim().charAt(0) || '؟')}</div>`;
+}
+async function toDataURL(blob) { return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(blob); }); }
+async function shrinkImage(file, max, q) {
+  const url = await toDataURL(file);
+  return new Promise(res => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(b => res(b || file), 'image/jpeg', q);
+    };
+    img.onerror = () => res(file);
+    img.src = url;
+  });
+}
+
+/* ---------- الحالة ---------- */
+const S = {
+  mode: null,            // 'sb' | 'local'
+  forceLocal: false,
+  me: null, users: {}, contacts: {}, msgs: {}, cs: {}, hidden: new Set(), calls: [],
+  online: new Set(), typing: {}, cur: null, tab: 'chats', filter: 'all',
+  reply: null, edit: null, callsFilter: 'all',
+  stories: [], views: {}, seen: new Set(), gcalls: []
+};
+const csOf = p => S.cs[p] || (S.cs[p] = { archived: false, blocked: false, listed: false, pinned: null, cleared: 0, readUpto: 0 });
+const nameOf = id => (S.contacts[id] && S.contacts[id].nickname) || (S.users[id] && S.users[id].name) || 'مستخدم';
+const peerOf = m => (m.grp ? m.to : (m.from === S.me.id ? m.to : m.from));
+const isGroup = id => !!(S.users[id] && S.users[id].isGroup);
+const A = () => (S.mode === 'sb' ? SbA : LocalA);
+function visible(peer) {
+  const c = csOf(peer);
+  return (S.msgs[peer] || []).filter(m => m.ts > c.cleared && !S.hidden.has(m.id)).sort((a, b) => a.ts - b.ts);
+}
+function summary(peer) {
+  const v = visible(peer);
+  return { v, last: v[v.length - 1], unread: v.filter(m => (m.grp ? m.from !== S.me.id : m.from === peer) && !m.read).length };
+}
+function streak(peer) {
+  if (isGroup(peer)) return 0;
+  const mine = new Set(), theirs = new Set();
+  (S.msgs[peer] || []).forEach(m => (m.from === S.me.id ? mine : theirs).add(dayKey(m.ts)));
+  const ok = k => mine.has(k) && theirs.has(k);
+  let d = new Date(); if (!ok(dayKey(d))) d = new Date(Date.now() - 864e5);
+  let n = 0; while (ok(dayKey(d))) { n++; d = new Date(d.getTime() - 864e5); }
+  return n;
+}
+const streakText = n => n === 2 ? 'يومان' : (n <= 10 ? n + ' أيام' : n + ' يوماً');
+function previewText(m) {
+  if (!m) return '';
+  if (m.del_all) return m.from === S.me.id ? 'لقد حذفت هذه الرسالة' : 'تم حذف هذه الرسالة';
+  return { text: m.body, image: 'صورة', video: 'فيديو', audio: 'رسالة صوتية', file: 'ملف: ' + ((m.meta && m.meta.name) || ''), location: 'موقع جغرافي' }[m.kind] || m.body;
+}
+const kindIcon = m => ({ image: 'photo', video: 'videocam', audio: 'mic', file: 'attach_file', location: 'location_on' }[m.kind]);
+
+/* ---------- تحويل صفوف قاعدة البيانات ---------- */
+const rowToMsg = r => ({ id: r.id, from: r.sender, to: r.recipient, kind: r.kind, body: r.body || '', media: r.media || null, meta: r.meta || null, reply_to: r.reply_to || null, fwd: !!r.forwarded, edited: !!r.edited, del_all: !!r.deleted_all, ts: new Date(r.created_at).getTime(), read: !!r.read_at });
+const msgToRow = m => ({ id: m.id, sender: m.from, recipient: m.to, kind: m.kind, body: m.body || '', media: m.media || null, meta: m.meta || null, reply_to: m.reply_to || null, forwarded: !!m.fwd });
+const rowToCall = r => ({ id: r.id, caller: r.caller, callee: r.callee, kind: r.kind, status: r.status, ts: new Date(r.started_at).getTime(), answered: r.answered_at ? new Date(r.answered_at).getTime() : null, ended: r.ended_at ? new Date(r.ended_at).getTime() : null });
+const csToRow = (peer, c) => ({ owner: S.me.id, peer, archived: !!c.archived, blocked: !!c.blocked, listed: !!c.listed, pinned_msg: c.pinned || null, cleared_at: new Date(c.cleared || 0).toISOString(), read_upto: new Date(c.readUpto || 0).toISOString() });
+const rowToCS = r => ({ archived: !!r.archived, blocked: !!r.blocked, listed: !!r.listed, pinned: r.pinned_msg || null, cleared: r.cleared_at ? new Date(r.cleared_at).getTime() : 0, readUpto: r.read_upto ? new Date(r.read_upto).getTime() : 0 });
+const rowToGMsg = r => ({ id: r.id, from: r.sender, to: r.group_id, grp: true, kind: r.kind, body: r.body || '', media: r.media || null, meta: r.meta || null, reply_to: r.reply_to || null, fwd: !!r.forwarded, edited: !!r.edited, del_all: !!r.deleted_all, ts: new Date(r.created_at).getTime(), read: false });
+const gmsgToRow = m => ({ id: m.id, group_id: m.to, sender: m.from, kind: m.kind, body: m.body || '', media: m.media || null, meta: m.meta || null, reply_to: m.reply_to || null, forwarded: !!m.fwd });
+
+/* =====================================================================
+   الوضع التجريبي المحلي (بدون Supabase)
+   ===================================================================== */
+const LKEY = 'djrat_demo_v3';
+function persistLocal() {
+  if (S.mode !== 'local' || !S.me) return;
+  try {
+    const msgs = [].concat(...Object.values(S.msgs));
+    localStorage.setItem(LKEY, JSON.stringify({ me: S.me, users: S.users, contacts: S.contacts, msgs, cs: S.cs, hidden: [...S.hidden], calls: S.calls, stories: S.stories, views: S.views, seen: [...S.seen], gcalls: S.gcalls }));
+  } catch (e) { toast('مساحة التخزين المحلية ممتلئة', 'warning'); }
+}
+function loadLocal() {
+  try {
+    const d = JSON.parse(localStorage.getItem(LKEY) || 'null');
+    if (!d || !d.me) return false;
+    S.mode = 'local'; S.me = d.me; S.users = d.users || {}; S.contacts = d.contacts || {}; S.msgs = {};
+    (d.msgs || []).forEach(m => { (S.msgs[peerOf(m)] = S.msgs[peerOf(m)] || []).push(m); });
+    S.cs = d.cs || {}; S.hidden = new Set(d.hidden || []); S.calls = d.calls || [];
+    S.stories = d.stories || []; S.views = d.views || {}; S.seen = new Set(d.seen || []); S.gcalls = d.gcalls || [];
+    return true;
+  } catch (e) { return false; }
+}
+function seedLocal() {
+  const now = Date.now(), H = 36e5, D = 864e5;
+  const U = [['demo_mj', 'محمد احمد جبار', 'mohammed_j', 'مصمم جرافيك'], ['demo_ali', 'علي ياسر', 'ali_yaser', 'مهندس معماري'],
+    ['demo_ma', 'محمد احمد حسن', 'mohammed_art', 'فنان تشكيلي'], ['demo_ab', 'عباس حسين', 'abbas_hussain', 'طالب ثانوية'], ['demo_af', 'أحمد الفراتي', 'ahmed_furat', '']];
+  U.forEach(u => { S.users[u[0]] = { id: u[0], name: u[1], username: u[2], bio: u[3], photo: '' }; });
+  ['demo_mj', 'demo_ali', 'demo_ma', 'demo_ab'].forEach(id => { S.contacts[id] = { nickname: '' }; });
+  const add = (peer, from, text, ts, read) => { (S.msgs[peer] = S.msgs[peer] || []).push({ id: uuid(), from: from === 'me' ? S.me.id : peer, to: from === 'me' ? peer : S.me.id, kind: 'text', body: text, media: null, meta: null, reply_to: null, fwd: false, edited: false, del_all: false, ts, read: read !== false }); };
+  for (let d = 17; d >= 1; d--) { add('demo_mj', 'them', 'صباح الخير، شنو أخبارك اليوم؟', now - d * D - 5 * H, true); add('demo_mj', 'me', 'الحمد لله تمام، وأنت؟', now - d * D - 4 * H, true); }
+  add('demo_mj', 'me', 'أرسل لي التصميم النهائي لو سمحت', now - 3 * H, true);
+  add('demo_mj', 'them', 'تمام، شفت الملف الجديد؟', now - 2 * H, false);
+  add('demo_mj', 'them', 'سلام عليكم، أرسلت لك ملاحظاتي على المشروع', now - 1.5 * H, false);
+  add('demo_ali', 'them', 'هل أنهيت المخطط؟', now - 9 * H, true);
+  add('demo_ali', 'me', 'تم الاتفاق، سأرسل لك المخطط الهندسي لمركز بغداد', now - 8 * H, true);
+  add('demo_ma', 'them', 'صورة العمل الفني الجديد لبوابة النهر', now - 1 * D - 3 * H, true);
+  for (let d = 6; d >= 1; d--) { add('demo_ab', 'them', 'السلام عليكم', now - d * D - 6 * H, true); add('demo_ab', 'me', 'وعليكم السلام ورحمة الله', now - d * D - 5 * H, true); }
+  add('demo_ab', 'me', 'شكراً جزيلاً، التوثيق وصل بنجاح وستتم مراجعته', now - 1 * D - 6 * H, true);
+  S.calls = [
+    { id: uuid(), caller: 'demo_mj', callee: S.me.id, kind: 'audio', status: 'missed', ts: now - 2.2 * H, answered: null, ended: null },
+    { id: uuid(), caller: S.me.id, callee: 'demo_ali', kind: 'video', status: 'ended', ts: now - 1 * D - 5 * H, answered: now - 1 * D - 5 * H + 6e3, ended: now - 1 * D - 5 * H + 348e3 },
+    { id: uuid(), caller: 'demo_ab', callee: S.me.id, kind: 'audio', status: 'ended', ts: now - 2 * D, answered: now - 2 * D + 4e3, ended: now - 2 * D + 99e3 },
+    { id: uuid(), caller: S.me.id, callee: 'demo_ma', kind: 'audio', status: 'missed', ts: now - 3 * D, answered: null, ended: null }
+  ];
+}
+const REPLIES = ['وصلتني رسالتك', 'تمام، أشوفها وأرد عليك', 'الله يسلمك', 'ماشي، اتفقنا', 'أهلاً وسهلاً', 'بعد شوي أكلمك'];
+function autoReply(m) {
+  if (m.grp) return groupAutoReply(m);
+  if (String(m.to).indexOf('demo_') !== 0) return;
+  const peer = m.to;
+  setTimeout(() => { S.typing[peer] = Date.now(); renderChatHead(); }, 700);
+  setTimeout(() => {
+    delete S.typing[peer];
+    (S.msgs[peer] || []).forEach(x => { if (x.from === S.me.id) x.read = true; });
+    const r = { id: uuid(), from: peer, to: S.me.id, kind: 'text', body: REPLIES[Math.floor(Math.random() * REPLIES.length)], media: null, meta: null, reply_to: null, fwd: false, edited: false, del_all: false, ts: Date.now(), read: S.cur === peer };
+    (S.msgs[peer] = S.msgs[peer] || []).push(r); persistLocal(); afterIncoming(r);
+  }, 2000);
+}
+const P = async () => { persistLocal(); };
+const LocalA = {
+  async saveProfile(p) { S.me = { ...S.me, ...p }; S.users[S.me.id] = S.me; persistLocal(); return S.me; },
+  async usernameFree(un) { un = un.toLowerCase(); return !Object.values(S.users).some(u => u.id !== (S.me && S.me.id) && (u.username || '').toLowerCase() === un); },
+  async search(q) { q = q.toLowerCase(); return Object.values(S.users).filter(u => u.id !== S.me.id && (u.username || '').toLowerCase().indexOf(q) === 0).slice(0, 8); },
+  async byEmail() { return null; },
+  async ensureUsers() {},
+  async sendMsg(m) { persistLocal(); autoReply(m); },
+  editMsg: P, delAll: P, delMe: P, saveCS: P, saveContact: P, removeContact: P, logCall: P, updateCall: P,
+  async markRead() { persistLocal(); },
+  async signal() {}, async typing() {},
+  async upload(blob) { if (blob.size > MAX_LOCAL) throw new Error('حجم الملف كبير للوضع التجريبي (الحد 1.5 ميغابايت)'); return toDataURL(blob); }
+};
+
+/* =====================================================================
+   Supabase
+   ===================================================================== */
+const tblOf = id => { for (const k in S.msgs) { const m = S.msgs[k].find(x => x.id === id); if (m) return m.grp ? 'group_messages' : 'messages'; } return 'messages'; };
+const failed = (e, msg) => { const x = new Error(msg || (e && e.message) || 'خطأ'); x.code = e && e.code; return x; };
+let rtChannel = null, presenceChannel = null, typingChannel = null;
+const SbA = {
+  async sendOtp(email) { const { error } = await sb.auth.signInWithOtp({ email, options: { shouldCreateUser: true } }); if (error) throw error; },
+  async verifyOtp(email, token) { const { data, error } = await sb.auth.verifyOtp({ email, token, type: 'email' }); if (error) throw error; return data; },
+  async loadProfile(uid) { const { data, error } = await sb.from('profiles').select('*').eq('id', uid).maybeSingle(); if (error) throw error; return data; },
+  async saveProfile(p) {
+    const row = { id: S.me.id, username: p.username.toLowerCase(), name: p.name, bio: p.bio || '', photo: p.photo || '' };
+    const { error } = await sb.from('profiles').upsert(row);
+    if (error) throw failed(error, error.code === '23505' ? 'اليوزر مستخدم بالفعل' : error.message);
+    S.me = { ...S.me, ...row }; S.users[S.me.id] = S.me; return S.me;
+  },
+  async usernameFree(un) { const { data } = await sb.from('profiles').select('id').eq('username', un.toLowerCase()).maybeSingle(); return !data || data.id === S.me.id; },
+  async search(q) {
+    const pat = q.replace(/[\\%_]/g, m => '\\' + m) + '%';
+    const { data, error } = await sb.from('profiles').select('*').ilike('username', pat).neq('id', S.me.id).limit(8);
+    if (error) { console.error('search', error); toast('خطأ في البحث: ' + (error.message || error.code), 'warning'); }
+    return data || [];
+  },
+  async byEmail(email) { const { data } = await sb.rpc('find_user_by_email', { p_email: email }); return Array.isArray(data) ? (data[0] || null) : (data || null); },
+  async ensureUsers(ids) {
+    const
